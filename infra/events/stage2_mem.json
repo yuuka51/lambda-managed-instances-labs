@@ -1,0 +1,11 @@
+{
+  "action": "benchmark",
+  "bucket": "your-bucket",
+  "before_key": "datasets/run002/before.tsv",
+  "after_key": "datasets/run002/after.tsv",
+  "out_prefix": "results/run002/lmi/mem/",
+  "engines": "duckdb,polars,pandas,fireducks",
+  "strictness": "B",
+  "impl": "codex",
+  "memray": true
+}

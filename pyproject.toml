@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lambda-managed-instances-lab"
+version = "0.2.0"
+description = "Benchmark lab for TSV integrity checks across Lambda, Lambda Managed Instances, and EC2"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "lambda-managed-instances-lab" }]
+dependencies = []
+
+[project.optional-dependencies]
+pandas = ["pandas>=2.0"]
+polars = ["polars>=0.20"]
+duckdb = ["duckdb>=1.0"]
+spark = ["pyspark>=3.5"]
+aws = ["boto3>=1.34"]
+all = ["pandas>=2.0", "polars>=0.20", "duckdb>=1.0", "pyspark>=3.5", "boto3>=1.34"]
+
+[project.scripts]
+lmi-lab = "lmi_lab.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

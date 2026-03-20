@@ -1,0 +1,353 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Optimized EC2 + S3 + SSM environment with VPC Endpoints for lambda-managed-instances-lab
+
+Parameters:
+  ArtifactBucket:
+    Type: String
+    Description: S3 bucket containing the repository ZIP artifact
+  ArtifactKey:
+    Type: String
+    Description: S3 object key for the repository ZIP file
+    Default: artifacts/lmi-lab.zip
+  VpcCidr:
+    Type: String
+    Default: 192.168.0.0/16
+    Description: CIDR block for VPC
+  PrivateSubnetCidr:
+    Type: String
+    Default: 192.168.20.0/24
+    Description: CIDR block for private subnet
+  AvailabilityZone:
+    Type: AWS::EC2::AvailabilityZone::Name
+    Default: ap-northeast-1a
+    Description: Availability Zone for subnet
+  InstanceType:
+    Type: String
+    Default: r7i.xlarge
+    Description: EC2 instance type (memory-optimized recommended)
+  RootVolumeGiB:
+    Type: Number
+    Default: 512
+    MinValue: 30
+    Description: Root volume size in GiB
+  DatasetPrefix:
+    Type: String
+    Default: inputs/run-real/
+    Description: S3 prefix for input datasets
+  ResultsPrefix:
+    Type: String
+    Default: results/
+    Description: S3 prefix for output results
+  BucketName:
+    Type: String
+    Default: ''
+    Description: Optional custom name for data bucket
+
+Conditions:
+  UseCustomBucketName: !Not [!Equals [!Ref BucketName, '']]
+
+Resources:
+  # VPC and Network
+  LabVpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCidr
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-vpc'
+
+  PrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref LabVpc
+      CidrBlock: !Ref PrivateSubnetCidr
+      AvailabilityZone: !Ref AvailabilityZone
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-private-subnet'
+
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref LabVpc
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-private-rt'
+
+  PrivateSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet
+      RouteTableId: !Ref PrivateRouteTable
+
+  # VPC Endpoints
+  S3GatewayEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref LabVpc
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.s3'
+      VpcEndpointType: Gateway
+      RouteTableIds:
+        - !Ref PrivateRouteTable
+
+  VpcEndpointSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for VPC endpoints
+      VpcId: !Ref LabVpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: !Ref VpcCidr
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-vpce-sg'
+
+  SsmEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref LabVpc
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.ssm'
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SubnetIds:
+        - !Ref PrivateSubnet
+      SecurityGroupIds:
+        - !Ref VpcEndpointSecurityGroup
+
+  Ec2MessagesEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref LabVpc
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.ec2messages'
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SubnetIds:
+        - !Ref PrivateSubnet
+      SecurityGroupIds:
+        - !Ref VpcEndpointSecurityGroup
+
+  SsmMessagesEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref LabVpc
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.ssmmessages'
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SubnetIds:
+        - !Ref PrivateSubnet
+      SecurityGroupIds:
+        - !Ref VpcEndpointSecurityGroup
+
+  # S3 Bucket
+  LabBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketName: !If [UseCustomBucketName, !Ref BucketName, !Ref AWS::NoValue]
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteOldResults
+            Status: Enabled
+            Prefix: !Ref ResultsPrefix
+            ExpirationInDays: 30
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-data-bucket'
+
+  # IAM Role and Instance Profile
+  LabRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Policies:
+        - PolicyName: DataBucketAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: s3:ListBucket
+                Resource: !GetAtt LabBucket.Arn
+                Condition:
+                  StringLike:
+                    s3:prefix:
+                      - ""
+                      - !Sub '${DatasetPrefix}*'
+                      - !Sub '${ResultsPrefix}*'
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:DeleteObject
+                Resource:
+                  - !Sub '${LabBucket.Arn}/${DatasetPrefix}*'
+                  - !Sub '${LabBucket.Arn}/${ResultsPrefix}*'
+        - PolicyName: ArtifactBucketReadAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: s3:GetObject
+                Resource: !Sub 'arn:aws:s3:::${ArtifactBucket}/${ArtifactKey}'
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-role'
+
+  LabInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref LabRole
+
+  # Security Group for EC2
+  LabSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for lab instance (no inbound, outbound to VPC endpoints only)
+      VpcId: !Ref LabVpc
+      SecurityGroupIngress: []
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: !Ref VpcCidr
+          Description: HTTPS to VPC endpoints
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-instance-sg'
+
+  # EC2 Instance
+  LabInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      IamInstanceProfile: !Ref LabInstanceProfile
+      InstanceType: !Ref InstanceType
+      SubnetId: !Ref PrivateSubnet
+      SecurityGroupIds:
+        - !Ref LabSecurityGroup
+      ImageId: '{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64}}'
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeType: gp3
+            VolumeSize: !Ref RootVolumeGiB
+            DeleteOnTermination: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-instance'
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          set -euxo pipefail
+
+          # Install dependencies
+          dnf -y install python3 python3-pip gcc gcc-c++ make unzip awscli
+
+          # Setup directory
+          install -d -o ec2-user -g ec2-user /opt/lambda-managed-instances-lab
+          cd /opt/lambda-managed-instances-lab
+
+          # Download and extract repository ZIP from S3
+          aws s3 cp "s3://${ArtifactBucket}/${ArtifactKey}" /tmp/lmi-lab.zip
+          
+          sudo -u ec2-user mkdir -p repo
+          sudo -u ec2-user unzip -o /tmp/lmi-lab.zip -d repo
+          rm -f /tmp/lmi-lab.zip
+
+          cd /opt/lambda-managed-instances-lab/repo
+          
+          # Handle nested directory structure
+          if [ ! -f pyproject.toml ] && [ ! -f requirements.txt ]; then
+            topdir="$(find . -mindepth 1 -maxdepth 1 -type d | head -n 1)"
+            if [ -n "$topdir" ] && [ "$(find . -mindepth 1 -maxdepth 1 | wc -l)" -eq 1 ]; then
+              cd "$topdir"
+            fi
+          fi
+          
+          # Setup Python environment
+          sudo -u ec2-user python3 -m venv .venv
+          source .venv/bin/activate
+          sudo -u ec2-user .venv/bin/python -m pip install -U pip wheel setuptools
+
+          # Install dependencies
+          if [ -f pyproject.toml ]; then
+            sudo -u ec2-user .venv/bin/pip install -e .
+          elif [ -f requirements.txt ]; then
+            sudo -u ec2-user .venv/bin/pip install -r requirements.txt
+          fi
+
+          # Setup environment variables
+          cat >/etc/profile.d/lmi-lab.sh <<'EOF'
+          export LMI_LAB_REPO=/opt/lambda-managed-instances-lab/repo
+          export LMI_LAB_BUCKET=${LabBucket}
+          EOF
+
+Outputs:
+  VpcId:
+    Description: VPC ID
+    Value: !Ref LabVpc
+    Export:
+      Name: !Sub '${AWS::StackName}-VpcId'
+  
+  PrivateSubnetId:
+    Description: Private Subnet ID
+    Value: !Ref PrivateSubnet
+    Export:
+      Name: !Sub '${AWS::StackName}-PrivateSubnetId'
+  
+  BucketName:
+    Description: Data bucket name
+    Value: !Ref LabBucket
+    Export:
+      Name: !Sub '${AWS::StackName}-BucketName'
+  
+  InstanceId:
+    Description: EC2 Instance ID
+    Value: !Ref LabInstance
+    Export:
+      Name: !Sub '${AWS::StackName}-InstanceId'
+  
+  SSMConnectionCommand:
+    Description: Command to connect via SSM
+    Value: !Sub 'aws ssm start-session --target ${LabInstance} --region ${AWS::Region}'
+  
+  VerificationCommands:
+    Description: Commands to verify setup after SSM connection
+    Value: |
+      sudo tail -n 200 /var/log/cloud-init-output.log
+      ls -la /opt/lambda-managed-instances-lab/repo
+      source /opt/lambda-managed-instances-lab/repo/.venv/bin/activate
+      python -V && pip list
+  
+  Architecture:
+    Description: Architecture summary
+    Value: |
+      - VPC with private subnet (no NAT Gateway)
+      - VPC Endpoints: S3 (Gateway), SSM/EC2Messages/SSMMessages (Interface)
+      - EC2 instance with SSM access only
+      - S3 bucket with lifecycle policy (30-day retention for results)

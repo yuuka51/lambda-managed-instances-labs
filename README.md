@@ -59,13 +59,19 @@ infra/
     stage3_time.json
 scripts/
   make_dataset.sh
-  run_local_benchmark.sh
   setup_venv.sh
 tests/
   test_normalize.py
   test_reference_oracle.py
+  test_codex_common.py
   test_codex_common_primary_keys.py
   test_data_prep_generate.py
+  test_duckdb_engine.py
+  test_fireducks_engine.py
+  test_pandas_engine.py
+  test_polars_engine.py
+  test_polars_null_handling.py
+  test_spark_engine.py
   test_aws_runner_artifacts.py
   test_aws_runner_memray.py
   fixtures/
@@ -149,7 +155,8 @@ S3入出力:
 
 ## CloudFormationで再現環境を作成
 
-`infra/cfn/ec2-s3-ssm.yml` で S3 / EC2 / SSM / IAM を一括作成できます。
+`infra/cfn/ec2-s3-ssm.yml` で VPC / S3 / EC2 / SSM / VPCエンドポイント / IAM を一括作成できます。
+VPCエンドポイント（SSM / EC2Messages / SSMMessages / S3）を含むプライベートサブネット構成で、NAT Gatewayなしで動作します。
 
 ### S3アーティファクト方式（Private リポジトリ対応）
 
@@ -191,8 +198,7 @@ aws cloudformation deploy \
   --parameter-overrides \
     ArtifactBucket=<your-artifact-bucket> \
     ArtifactKey=artifacts/lmi-lab.zip \
-    VpcId=<vpc-id> \
-    SubnetId=<subnet-id> \
+    AvailabilityZone=ap-northeast-1a \
     DatasetPrefix=inputs/run-real/ \
     ResultsPrefix=results/
 ```
@@ -203,19 +209,19 @@ aws cloudformation deploy \
 |-----------|------|-----------|
 | `ArtifactBucket` | リポジトリZIPを配置したS3バケット名 | （必須） |
 | `ArtifactKey` | ZIPファイルのS3オブジェクトキー | `artifacts/lmi-lab.zip` |
-| `VpcId` | EC2を起動するVPC ID | （必須） |
-| `SubnetId` | EC2を起動するサブネット ID（SSM用にインターネット接続が必要） | （必須） |
+| `VpcCidr` | VPCのCIDRブロック | `192.168.0.0/16` |
+| `PrivateSubnetCidr` | プライベートサブネットのCIDRブロック | `192.168.20.0/24` |
+| `AvailabilityZone` | サブネットのアベイラビリティゾーン | `ap-northeast-1a` |
 | `InstanceType` | EC2インスタンスタイプ | `r7i.xlarge` |
 | `RootVolumeGiB` | ルートボリュームサイズ（GB） | `512` |
 | `DatasetPrefix` | データセット用のS3プレフィックス | `inputs/run-real/` |
 | `ResultsPrefix` | 結果出力用のS3プレフィックス | `results/` |
 | `BucketName` | データバケット名（省略時は自動生成） | （空欄） |
 
-作成後、Outputs の `SSMConnectionHint` を使って接続できます。
+作成後、Outputs の `SSMConnectionCommand` を使って接続できます。
 
 ## データ生成とS3配置
 
-- 詳細手順: `docs/data_generation.md`
 - 一括スクリプト: `scripts/make_dataset.sh`
 
 ```bash

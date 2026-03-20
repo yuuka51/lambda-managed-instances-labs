@@ -1,0 +1,11 @@
+{
+  "action": "compare",
+  "bucket": "your-bucket",
+  "before_key": "datasets/run001/before.tsv",
+  "after_key": "datasets/run001/after.tsv",
+  "out_prefix": "results/run001/lambda/tmp/",
+  "engines": "duckdb",
+  "strictness": "A",
+  "impl": "codex",
+  "memray": false
+}

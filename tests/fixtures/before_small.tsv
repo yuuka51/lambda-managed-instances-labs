@@ -1,0 +1,3 @@
+user_id	tags	levels	timestamps	op_type
+u1	2|1	10|2	2026-01-07 00:00:00	U
+u2	B|A	X|3	2026-01-08 00:00:00	D

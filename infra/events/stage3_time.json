@@ -1,0 +1,11 @@
+{
+  "action": "benchmark",
+  "bucket": "your-bucket",
+  "before_key": "datasets/run003/before.tsv",
+  "after_key": "datasets/run003/after.tsv",
+  "out_prefix": "results/run003/ec2/time/",
+  "engines": "duckdb,polars,pandas,fireducks,spark",
+  "strictness": "B",
+  "impl": "codex",
+  "memray": false
+}
