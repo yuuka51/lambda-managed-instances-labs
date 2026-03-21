@@ -24,7 +24,7 @@ def run_compare(config: RunConfig) -> CompareResult:
         spark.stop()
 
     diffs = diff_rows(before_rows, after_rows, config.primary_keys)
-    diff_path = config.outdir / "diff_codex_spark.csv"
+    diff_path = config.outdir / "diff_spark.csv"
     write_diff(diff_path, diffs)
     return CompareResult(
         engine="spark",

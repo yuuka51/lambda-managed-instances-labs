@@ -1,10 +1,10 @@
-"""Tests for Codex common module functions."""
+"""Tests for engines common module functions."""
 
 from pathlib import Path
 
 import pytest
 
-from lmi_lab.impls.codex.engines.common import normalize_rows, rows_from_tsv
+from lmi_lab.impls.engines.common import normalize_rows, rows_from_tsv
 
 
 def test_rows_from_tsv_basic():
@@ -127,7 +127,7 @@ def test_normalize_rows_all_deleted():
 
 def test_build_key_basic():
     """Test that build_key constructs composite keys correctly."""
-    from lmi_lab.impls.codex.engines.common import build_key
+    from lmi_lab.impls.engines.common import build_key
     
     row = {"user_id": "user1", "tags": "a|b", "levels": "1|2"}
     primary_keys = ["user_id"]
@@ -138,7 +138,7 @@ def test_build_key_basic():
 
 def test_build_key_multiple_keys():
     """Test that build_key handles multiple primary keys."""
-    from lmi_lab.impls.codex.engines.common import build_key
+    from lmi_lab.impls.engines.common import build_key
     
     row = {"user_id": "user1", "region": "us-east", "tags": "a|b"}
     primary_keys = ["user_id", "region"]
@@ -149,7 +149,7 @@ def test_build_key_multiple_keys():
 
 def test_build_key_missing_key():
     """Test that build_key raises ValueError when primary key is missing."""
-    from lmi_lab.impls.codex.engines.common import build_key
+    from lmi_lab.impls.engines.common import build_key
     
     row = {"user_id": "user1", "tags": "a|b"}
     primary_keys = ["user_id", "region"]
@@ -160,7 +160,7 @@ def test_build_key_missing_key():
 
 def test_build_key_empty_values():
     """Test that build_key handles empty string values correctly."""
-    from lmi_lab.impls.codex.engines.common import build_key
+    from lmi_lab.impls.engines.common import build_key
     
     row = {"user_id": "", "region": "us-east"}
     primary_keys = ["user_id", "region"]
@@ -171,7 +171,7 @@ def test_build_key_empty_values():
 
 def test_build_key_special_characters():
     """Test that build_key handles special characters in values."""
-    from lmi_lab.impls.codex.engines.common import build_key
+    from lmi_lab.impls.engines.common import build_key
     
     row = {"user_id": "user|1", "region": "us||east"}
     primary_keys = ["user_id", "region"]
@@ -182,7 +182,7 @@ def test_build_key_special_characters():
 
 def test_diff_rows_insert():
     """Test that diff_rows detects INSERT status for keys only in after."""
-    from lmi_lab.impls.codex.engines.common import diff_rows
+    from lmi_lab.impls.engines.common import diff_rows
     
     before_rows = [
         {"user_id": "user1", "tags": "a|b"},
@@ -204,7 +204,7 @@ def test_diff_rows_insert():
 
 def test_diff_rows_delete():
     """Test that diff_rows detects DELETE status for keys only in before."""
-    from lmi_lab.impls.codex.engines.common import diff_rows
+    from lmi_lab.impls.engines.common import diff_rows
     
     before_rows = [
         {"user_id": "user1", "tags": "a|b"},
@@ -226,7 +226,7 @@ def test_diff_rows_delete():
 
 def test_diff_rows_update():
     """Test that diff_rows detects UPDATE status and changed columns."""
-    from lmi_lab.impls.codex.engines.common import diff_rows
+    from lmi_lab.impls.engines.common import diff_rows
     
     before_rows = [
         {"user_id": "user1", "tags": "a|b", "levels": "1|2"},
@@ -247,7 +247,7 @@ def test_diff_rows_update():
 
 def test_diff_rows_update_multiple_columns():
     """Test that diff_rows records multiple changed columns separated by pipe."""
-    from lmi_lab.impls.codex.engines.common import diff_rows
+    from lmi_lab.impls.engines.common import diff_rows
     
     before_rows = [
         {"user_id": "user1", "tags": "a|b", "levels": "1|2", "timestamps": "t1|t2"},
@@ -269,7 +269,7 @@ def test_diff_rows_update_multiple_columns():
 
 def test_diff_rows_no_changes():
     """Test that diff_rows returns empty list when rows are identical."""
-    from lmi_lab.impls.codex.engines.common import diff_rows
+    from lmi_lab.impls.engines.common import diff_rows
     
     before_rows = [
         {"user_id": "user1", "tags": "a|b"},
@@ -289,7 +289,7 @@ def test_diff_rows_no_changes():
 
 def test_diff_rows_mixed_operations():
     """Test that diff_rows handles INSERT, DELETE, and UPDATE together."""
-    from lmi_lab.impls.codex.engines.common import diff_rows
+    from lmi_lab.impls.engines.common import diff_rows
     
     before_rows = [
         {"user_id": "user1", "tags": "a|b"},
@@ -319,7 +319,7 @@ def test_diff_rows_mixed_operations():
 
 def test_diff_rows_empty_before():
     """Test that diff_rows handles empty before_rows (all inserts)."""
-    from lmi_lab.impls.codex.engines.common import diff_rows
+    from lmi_lab.impls.engines.common import diff_rows
     
     before_rows = []
     after_rows = [
@@ -337,7 +337,7 @@ def test_diff_rows_empty_before():
 
 def test_diff_rows_empty_after():
     """Test that diff_rows handles empty after_rows (all deletes)."""
-    from lmi_lab.impls.codex.engines.common import diff_rows
+    from lmi_lab.impls.engines.common import diff_rows
     
     before_rows = [
         {"user_id": "user1", "tags": "a|b"},
@@ -355,7 +355,7 @@ def test_diff_rows_empty_after():
 
 def test_diff_rows_composite_key():
     """Test that diff_rows works with composite primary keys."""
-    from lmi_lab.impls.codex.engines.common import diff_rows
+    from lmi_lab.impls.engines.common import diff_rows
     
     before_rows = [
         {"user_id": "user1", "region": "us-east", "tags": "a|b"},

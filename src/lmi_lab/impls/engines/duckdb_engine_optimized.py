@@ -72,7 +72,7 @@ def run_compare(config: RunConfig) -> CompareResult:
     ).fetchone()
     
     # Write results
-    diff_path = config.outdir / "diff_codex_duckdb.csv"
+    diff_path = config.outdir / "diff_duckdb.csv"
     diff_path.parent.mkdir(parents=True, exist_ok=True)
     result_df.to_csv(diff_path, index=False)
     

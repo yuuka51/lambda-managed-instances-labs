@@ -85,7 +85,7 @@ def run_compare(config: RunConfig) -> CompareResult:
     # Sort and write results
     diffs_df = pd.DataFrame(diffs).sort_values('key')
     
-    diff_path = config.outdir / "diff_codex_pandas.csv"
+    diff_path = config.outdir / "diff_pandas.csv"
     diff_path.parent.mkdir(parents=True, exist_ok=True)
     diffs_df.to_csv(diff_path, index=False)
     

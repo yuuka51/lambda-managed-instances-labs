@@ -16,13 +16,13 @@ def test_run_event_uploads_only_current_compare_artifacts(monkeypatch, tmp_path:
         uploaded.append((bucket, key, src.name))
 
     class DummyResult:
-        diff_path = Path("/tmp/lmi_lab/out/diff_codex_duckdb.csv")
+        diff_path = Path("/tmp/lmi_lab/out/diff_duckdb.csv")
 
         def to_dict(self) -> dict:
             return {"engine": "duckdb", "diff_path": str(self.diff_path)}
 
     def fake_run_compare(_cfg, _engine):
-        diff_path = Path("/tmp/lmi_lab/out/diff_codex_duckdb.csv")
+        diff_path = Path("/tmp/lmi_lab/out/diff_duckdb.csv")
         diff_path.write_text("kind,user_id\n", encoding="utf-8")
         return DummyResult()
 
@@ -48,5 +48,5 @@ def test_run_event_uploads_only_current_compare_artifacts(monkeypatch, tmp_path:
 
     assert response["ok"] is True
     uploaded_names = [name for _, _, name in uploaded]
-    assert uploaded_names == ["summary.json", "diff_codex_duckdb.csv"]
+    assert uploaded_names == ["summary.json", "diff_duckdb.csv"]
     assert not stale.exists()

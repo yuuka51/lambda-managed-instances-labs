@@ -84,7 +84,7 @@ def run_compare(config: RunConfig) -> CompareResult:
     )
     
     # Write results
-    diff_path = config.outdir / "diff_codex_polars.csv"
+    diff_path = config.outdir / "diff_polars.csv"
     diff_path.parent.mkdir(parents=True, exist_ok=True)
     diffs.write_csv(diff_path)
     

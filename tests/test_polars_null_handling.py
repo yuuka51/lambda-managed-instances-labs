@@ -10,7 +10,7 @@ import pytest
 def test_polars_engine_null_handling():
     """Test that polars engine fills null values with empty strings (Requirement 5.5)."""
     try:
-        from lmi_lab.impls.codex.engines.polars_engine import run_compare
+        from lmi_lab.impls.engines.polars_engine import run_compare
         from lmi_lab.core.config import RunConfig
     except ImportError:
         pytest.skip("polars is not installed")

@@ -5,7 +5,7 @@ import tempfile
 import pytest
 
 from lmi_lab.core.config import RunConfig
-from lmi_lab.impls.codex.engines.pandas_engine import run_compare
+from lmi_lab.impls.engines.pandas_engine import run_compare
 
 
 def test_pandas_engine_basic():
@@ -34,7 +34,7 @@ def test_pandas_engine_basic():
         
         # Verify result structure
         assert result.engine == "pandas"
-        assert result.diff_path == outdir / "diff_codex_pandas.csv"
+        assert result.diff_path == outdir / "diff_pandas.csv"
         assert result.diff_path.exists()
         
         # Verify row counts
@@ -72,7 +72,7 @@ def test_pandas_engine_not_installed(monkeypatch):
     
     # Reload the module to trigger the import error
     import importlib
-    from lmi_lab.impls.codex.engines import pandas_engine
+    from lmi_lab.impls.engines import pandas_engine
     importlib.reload(pandas_engine)
     
     with tempfile.TemporaryDirectory() as tmpdir:

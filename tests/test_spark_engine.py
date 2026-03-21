@@ -45,7 +45,7 @@ def test_spark_engine_basic():
     """Test that spark engine can process TSV files end-to-end."""
     _skip_if_no_spark_or_java()
     
-    from lmi_lab.impls.codex.engines.spark_engine import run_compare
+    from lmi_lab.impls.engines.spark_engine import run_compare
     
     # Create a temporary output directory
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -69,7 +69,7 @@ def test_spark_engine_basic():
         # Verify the result
         assert isinstance(result, CompareResult)
         assert result.engine == "spark"
-        assert result.diff_path == outdir / "diff_codex_spark.csv"
+        assert result.diff_path == outdir / "diff_spark.csv"
         assert result.diff_path.exists()
         assert result.rows_before >= 0
         assert result.rows_after >= 0
@@ -83,7 +83,7 @@ def test_spark_engine_strictness_b():
     """Test that spark engine works with strictness mode B."""
     _skip_if_no_spark_or_java()
     
-    from lmi_lab.impls.codex.engines.spark_engine import run_compare
+    from lmi_lab.impls.engines.spark_engine import run_compare
     
     # Create a temporary output directory
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -114,7 +114,7 @@ def test_spark_engine_diff_file_format():
     """Test that spark engine generates diff file with correct format."""
     _skip_if_no_spark_or_java()
     
-    from lmi_lab.impls.codex.engines.spark_engine import run_compare
+    from lmi_lab.impls.engines.spark_engine import run_compare
     
     # Create a temporary output directory
     with tempfile.TemporaryDirectory() as tmpdir:

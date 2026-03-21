@@ -21,7 +21,7 @@ def run_compare(config: RunConfig) -> CompareResult:
     after_rows = normalize_rows(after_df.to_dict(orient="records"), config.strictness)
     diffs = diff_rows(before_rows, after_rows, config.primary_keys)
 
-    diff_path = config.outdir / "diff_codex_fireducks.csv"
+    diff_path = config.outdir / "diff_fireducks.csv"
     write_diff(diff_path, diffs)
     return CompareResult(
         engine="fireducks",

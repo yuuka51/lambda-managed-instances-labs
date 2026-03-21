@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from lmi_lab.impls.codex.engines.common import diff_rows
+from lmi_lab.impls.engines.common import diff_rows
 
 
 def test_diff_rows_rejects_missing_primary_key_columns() -> None:

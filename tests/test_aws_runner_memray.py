@@ -8,7 +8,7 @@ from lmi_lab.runners import aws_runner
 
 
 class DummyResult:
-    diff_path = Path("/tmp/lmi_lab/out/diff_codex_duckdb.csv")
+    diff_path = Path("/tmp/lmi_lab/out/diff_duckdb.csv")
 
     def to_dict(self) -> dict:
         return {"engine": "duckdb", "diff_path": str(self.diff_path)}

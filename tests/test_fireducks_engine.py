@@ -5,7 +5,7 @@ import tempfile
 import pytest
 
 from lmi_lab.core.config import RunConfig
-from lmi_lab.impls.codex.engines.fireducks_engine import run_compare
+from lmi_lab.impls.engines.fireducks_engine import run_compare
 
 
 def test_fireducks_engine_basic():
@@ -34,7 +34,7 @@ def test_fireducks_engine_basic():
         
         # Verify result structure
         assert result.engine == "fireducks"
-        assert result.diff_path == outdir / "diff_codex_fireducks.csv"
+        assert result.diff_path == outdir / "diff_fireducks.csv"
         assert result.diff_path.exists()
         
         # Verify row counts
@@ -72,7 +72,7 @@ def test_fireducks_engine_not_installed(monkeypatch):
     
     # Reload the module to trigger the import error
     import importlib
-    from lmi_lab.impls.codex.engines import fireducks_engine
+    from lmi_lab.impls.engines import fireducks_engine
     importlib.reload(fireducks_engine)
     
     with tempfile.TemporaryDirectory() as tmpdir:

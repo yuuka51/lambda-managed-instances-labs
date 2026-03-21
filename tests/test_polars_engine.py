@@ -18,7 +18,7 @@ def test_polars_engine_import_error():
 def test_polars_engine_basic():
     """Test that polars engine can process TSV files end-to-end."""
     try:
-        from lmi_lab.impls.codex.engines.polars_engine import run_compare
+        from lmi_lab.impls.engines.polars_engine import run_compare
     except ImportError:
         pytest.skip("polars is not installed")
     
@@ -49,7 +49,7 @@ def test_polars_engine_basic():
         # Verify the result
         assert isinstance(result, CompareResult)
         assert result.engine == "polars"
-        assert result.diff_path == outdir / "diff_codex_polars.csv"
+        assert result.diff_path == outdir / "diff_polars.csv"
         assert result.diff_path.exists()
         assert result.rows_before >= 0
         assert result.rows_after >= 0
@@ -62,7 +62,7 @@ def test_polars_engine_basic():
 def test_polars_engine_strictness_b():
     """Test that polars engine works with strictness mode B."""
     try:
-        from lmi_lab.impls.codex.engines.polars_engine import run_compare
+        from lmi_lab.impls.engines.polars_engine import run_compare
     except ImportError:
         pytest.skip("polars is not installed")
     
@@ -99,7 +99,7 @@ def test_polars_engine_strictness_b():
 def test_polars_engine_diff_file_format():
     """Test that polars engine generates diff file with correct format."""
     try:
-        from lmi_lab.impls.codex.engines.polars_engine import run_compare
+        from lmi_lab.impls.engines.polars_engine import run_compare
     except ImportError:
         pytest.skip("polars is not installed")
     

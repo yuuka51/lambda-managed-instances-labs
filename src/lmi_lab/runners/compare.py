@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from lmi_lab.core.config import RunConfig
 from lmi_lab.core.schema import CompareResult
-from lmi_lab.impls.codex import ENGINE_MAP as CODEX_ENGINES
+from lmi_lab.impls import ENGINE_MAP
 from lmi_lab.reference_impl import run_compare as reference_compare
 
 ALL_ENGINES = ["duckdb", "pandas", "fireducks", "polars", "spark"]
@@ -23,7 +23,7 @@ def run_compare(config: RunConfig, engine: str) -> CompareResult:
     if engine == "reference":
         return reference_compare(config)
 
-    mapper = CODEX_ENGINES
+    mapper = ENGINE_MAP
     if engine not in mapper:
         raise ValueError(f"unsupported engine: {engine}")
     return mapper[engine](config)

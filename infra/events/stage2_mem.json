@@ -6,6 +6,6 @@
   "out_prefix": "results/run002/lmi/mem/",
   "engines": "duckdb,polars,pandas,fireducks",
   "strictness": "B",
-  "impl": "codex",
+  "impl": "engines",
   "memray": true
 }

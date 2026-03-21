@@ -6,6 +6,6 @@
   "out_prefix": "results/run001/lambda/tmp/",
   "engines": "duckdb",
   "strictness": "A",
-  "impl": "codex",
+  "impl": "engines",
   "memray": false
 }
